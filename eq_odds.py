@@ -220,7 +220,7 @@ if __name__ == '__main__':
         test_and_val_data = test_and_val_data.sample(n=100000, random_state=1)
         country = str(sys.argv[2])
         test_and_val_data["group"] = test_and_val_data["country"] == country*1
-        def complex_function(prediction, country):
+        def country_specific_threshold(prediction, country):
             if country in country_thresholds.keys():
                 if prediction > country_thresholds[country]:
                     return 1
@@ -231,7 +231,7 @@ if __name__ == '__main__':
                     return 1
                 else:
                     return 0
-        def biaspred(x): return complex_function(x['prediction'], x['country'])
+        def biaspred(x): return country_specific_threshold(x['prediction'], x['country'])
         test_and_val_data['biaspred'] = test_and_val_data.apply(biaspred, axis=1)
         test_and_val_data["biaspred"] = test_and_val_data["prediction"]
 

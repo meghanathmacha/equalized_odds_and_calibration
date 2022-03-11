@@ -233,7 +233,6 @@ if __name__ == '__main__':
                     return 0
         def biaspred(x): return country_specific_threshold(x['prediction'], x['country'])
         test_and_val_data['biaspred'] = test_and_val_data.apply(biaspred, axis=1)
-        test_and_val_data["biaspred"] = test_and_val_data["prediction"]
 
     # Randomly split the data into two sets - one for computing the fairness constants
     order = np.random.permutation(len(test_and_val_data))

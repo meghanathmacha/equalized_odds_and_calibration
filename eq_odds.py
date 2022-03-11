@@ -208,12 +208,32 @@ if __name__ == '__main__':
     import pandas as pd
     import sys
 
-    if not len(sys.argv) == 2:
+    if not len(sys.argv) == 3:
         raise RuntimeError('Invalid number of arguments')
 
     # Load the validation set scores from csvs
     data_filename = sys.argv[1]
     test_and_val_data = pd.read_csv(sys.argv[1])
+    country_thresholds = {'US' : 0.65, 'JP' : 0.73, 'GB': 0.64, 'CA' : 0.65, 'DE' : 0.67}
+    base_threshold = 0.7
+    if data_filename == "data/fraud.csv":
+        test_and_val_data = test_and_val_data.sample(n=100000, random_state=1)
+        country = str(sys.argv[2])
+        test_and_val_data["group"] = test_and_val_data["country"] == country*1
+        def complex_function(prediction, country):
+            if country in country_thresholds.keys():
+                if prediction > country_thresholds[country]:
+                    return 1
+                else:
+                    return 0
+            else:
+                if prediction > base_threshold:
+                    return 1
+                else:
+                    return 0
+        def biaspred(x): return complex_function(x['prediction'], x['country'])
+        test_and_val_data['biaspred'] = test_and_val_data.apply(biaspred, axis=1)
+        test_and_val_data["biaspred"] = test_and_val_data["prediction"]
 
     # Randomly split the data into two sets - one for computing the fairness constants
     order = np.random.permutation(len(test_and_val_data))
@@ -228,11 +248,15 @@ if __name__ == '__main__':
     group_0_test_data = test_data[test_data['group'] == 0]
     group_1_test_data = test_data[test_data['group'] == 1]
 
-    group_0_val_model = Model(group_0_val_data['prediction'].as_matrix(), group_0_val_data['label'].as_matrix())
-    group_1_val_model = Model(group_1_val_data['prediction'].as_matrix(), group_1_val_data['label'].as_matrix())
-    group_0_test_model = Model(group_0_test_data['prediction'].as_matrix(), group_0_test_data['label'].as_matrix())
-    group_1_test_model = Model(group_1_test_data['prediction'].as_matrix(), group_1_test_data['label'].as_matrix())
+    group_0_val_model = Model(group_0_val_data['prediction'].to_numpy(), group_0_val_data['label'].to_numpy())
+    group_1_val_model = Model(group_1_val_data['prediction'].to_numpy(), group_1_val_data['label'].to_numpy())
+    group_0_test_model = Model(group_0_test_data['prediction'].to_numpy(), group_0_test_data['label'].to_numpy())
+    group_1_test_model = Model(group_1_test_data['prediction'].to_numpy(), group_1_test_data['label'].to_numpy())
 
+    bias_group_0_val_model = Model(group_0_val_data['biaspred'].to_numpy(), group_0_val_data['label'].to_numpy())
+    bias_group_1_val_model = Model(group_1_val_data['biaspred'].to_numpy(), group_1_val_data['label'].to_numpy())
+    bias_group_0_test_model = Model(group_0_test_data['biaspred'].to_numpy(), group_0_test_data['label'].to_numpy())
+    bias_group_1_test_model = Model(group_1_test_data['biaspred'].to_numpy(), group_1_test_data['label'].to_numpy())
     # Find mixing rates for equalized odds models
     _, _, mix_rates = Model.eq_odds(group_0_val_model, group_1_val_model)
 
@@ -244,5 +268,7 @@ if __name__ == '__main__':
     # Print results on test model
     print('Original group 0 model:\n%s\n' % repr(group_0_test_model))
     print('Original group 1 model:\n%s\n' % repr(group_1_test_model))
+    print('Bias  group 0 model:\n%s\n' % repr(bias_group_0_test_model))
+    print('Bias group 1 model:\n%s\n' % repr(bias_group_1_test_model))
     print('Equalized odds group 0 model:\n%s\n' % repr(eq_odds_group_0_test_model))
     print('Equalized odds group 1 model:\n%s\n' % repr(eq_odds_group_1_test_model))

@@ -252,10 +252,11 @@ if __name__ == '__main__':
     group_0_test_model = Model(group_0_test_data['prediction'].to_numpy(), group_0_test_data['label'].to_numpy())
     group_1_test_model = Model(group_1_test_data['prediction'].to_numpy(), group_1_test_data['label'].to_numpy())
 
-    bias_group_0_val_model = Model(group_0_val_data['biaspred'].to_numpy(), group_0_val_data['label'].to_numpy())
-    bias_group_1_val_model = Model(group_1_val_data['biaspred'].to_numpy(), group_1_val_data['label'].to_numpy())
-    bias_group_0_test_model = Model(group_0_test_data['biaspred'].to_numpy(), group_0_test_data['label'].to_numpy())
-    bias_group_1_test_model = Model(group_1_test_data['biaspred'].to_numpy(), group_1_test_data['label'].to_numpy())
+    if data_filename == "data/fraud.csv":
+        bias_group_0_val_model = Model(group_0_val_data['biaspred'].to_numpy(), group_0_val_data['label'].to_numpy())
+        bias_group_1_val_model = Model(group_1_val_data['biaspred'].to_numpy(), group_1_val_data['label'].to_numpy())
+        bias_group_0_test_model = Model(group_0_test_data['biaspred'].to_numpy(), group_0_test_data['label'].to_numpy())
+        bias_group_1_test_model = Model(group_1_test_data['biaspred'].to_numpy(), group_1_test_data['label'].to_numpy())
     # Find mixing rates for equalized odds models
     _, _, mix_rates = Model.eq_odds(group_0_val_model, group_1_val_model)
 
@@ -267,7 +268,8 @@ if __name__ == '__main__':
     # Print results on test model
     print('Original group 0 model:\n%s\n' % repr(group_0_test_model))
     print('Original group 1 model:\n%s\n' % repr(group_1_test_model))
-    print('Bias  group 0 model:\n%s\n' % repr(bias_group_0_test_model))
-    print('Bias group 1 model:\n%s\n' % repr(bias_group_1_test_model))
+    if data_filename == "data/fraud.csv":
+        print('Bias  group 0 model:\n%s\n' % repr(bias_group_0_test_model))
+        print('Bias group 1 model:\n%s\n' % repr(bias_group_1_test_model))
     print('Equalized odds group 0 model:\n%s\n' % repr(eq_odds_group_0_test_model))
     print('Equalized odds group 1 model:\n%s\n' % repr(eq_odds_group_1_test_model))
